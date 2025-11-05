@@ -1,11 +1,12 @@
 #include <iostream>
 #include <fstream>
-#include <string>
 #include <vector>
 #include <sstream>
+#include <string>
+#include <limits>
+
 using namespace std;
 
-// Estructura para representar un postre
 struct Postre {
     int id;
     string nombre;
@@ -13,97 +14,11 @@ struct Postre {
     int cantidad;
 };
 
-// -------------------- FUNCIONES ADMINISTRADOR --------------------
-
-void agregarPostre() {
-    ofstream archivo("postres.txt", ios::app);
-    Postre p;
-
-    cout << "\n--- Agregar nuevo postre ---\n";
-    cout << "ID: ";
-    cin >> p.id;
-    cin.ignore();
-    cout << "Nombre:    ";
-    getline(cin, p.nombre); 
-    cout << "Precio: ";
-    cin >> p.precio;
-    cout << "Cantidad: ";
-    cin >> p.cantidad;
-
-    archivo << p.id << "," << p.nombre << "," << p.precio << "," << p.cantidad << "\n";
-    archivo.close();
-
-    cout << "✅ Postre agregado correctamente.\n";
-}
-
-void mostrarPostres() {
+// Leer postres del archivo
+vector<Postre> leerPostres() {
+    vector<Postre> lista;
     ifstream archivo("postres.txt");
     string linea;
-#include <iostream>
-    int opcion;
-    do {
-        cout << "\n--- MENÚ ADMINISTRADOR ---\n";
-        cout << "1. Ver postres\n";
-        cout << "2. Agregar postre\n";
-        cout << "3. Salir\n";
-        cout << "Opción: ";
-        cin >> opcion;
-
-        switch (opcion) {
-            case 1: mostrarPostres(); break;
-            case 2: agregarPostre(); break;
-            case 3: cout << "Cerrando sesión...\n"; break;
-            default: cout << "Opción no válida.\n";
-        }
-    } while (opcion != 3);
-}
-
-void menuComprador() {
-    int opcion;
-    do {
-        cout << "\n--- MENÚ COMPRADOR ---\n";
-        cout << "1. Ver menú de postres\n";
-        cout << "2. Comprar postre\n";
-        cout << "3. Salir\n";
-        cout << "Opción: ";
-        cin >> opcion;
-
-        switch (opcion) {
-            case 1: verMenu(); break;
-            case 2: comprarPostre(); break;
-            case 3: cout << "Gracias por su compra!\n"; break;
-            default: cout << "Opción no válida.\n";
-        }
-    } while (opcion != 3);
-}
-
-// -------------------- PROGRAMA PRINCIPAL --------------------
-
-int main() {
-    string usuario, contraseña;
-
-    cout << "Ingrese usuario: ";
-    cin >> usuario;
-    cout << "Ingrese contraseña: ";
-    cin >> contraseña;
-
-    if (usuario == "admin" && contraseña == "12345678") {
-        cout << "\nBienvenido, Administrador 🧑‍💼\n";
-        menuAdmin();
-    }
-    else if (usuario == "comprador" && contraseña == "abc123") {
-        cout << "\nBienvenido, Comprador 🛒\n";
-        menuComprador();
-    }
-    else {
-        cout << "\n❌ Usuario o contraseña incorrectos.\n";
-    }
-
-    return 0;
-}
-    cout << "\n--- Lista de postres disponibles ---\n";
-    cout << "ID\tNombre\t\tPrecio\tCantidad\n";
-    cout << "---------------------------------------------\n";
 
     while (getline(archivo, linea)) {
         stringstream ss(linea);
@@ -113,198 +28,229 @@ int main() {
         getline(ss, precio, ',');
         getline(ss, cantidad, ',');
 
-        cout << id << "\t" << nombre << "\t\t" << precio << "\t" << cantidad << "\n";
+        if (id != "" && nombre != "" && precio != "" && cantidad != "") {
+            Postre p;
+            p.id = stoi(id);
+            p.nombre = nombre;
+            p.precio = stof(precio);
+            p.cantidad = stoi(cantidad);
+            lista.push_back(p);
+        }
     }
 
     archivo.close();
+    return lista;
 }
 
-// -------------------- FUNCIONES COMPRADOR --------------------
-
-void verMenu() {
-    mostrarPostres();
+// Guardar postres en archivo
+void guardarPostres(const vector<Postre>& lista) {
+    ofstream archivo("postres.txt");
+    for (auto &p : lista) {
+        archivo << p.id << "," << p.nombre << "," << p.precio << "," << p.cantidad << "\n";
+    }
+    archivo.close();
 }
 
-void comprarPostre() {
-    int id, cantidadCompra;
-    vector<Postre> lista;
+// Mostrar postres
+void mostrarPostres() {
+    auto lista = leerPostres();
+    cout << "\nLista de postres disponibles:\n";
+    cout << "----------------------------------------\n";
+    for (auto &p : lista) {
+        cout << "ID: " << p.id
+             << " | Nombre: " << p.nombre
+             << " | Precio: $" << p.precio
+             << " | Cantidad: " << p.cantidad << endl;
+    }
+    cout << "----------------------------------------\n";
+}
+
+// Agregar postre
+void agregarPostre() {
+    vector<Postre> lista = leerPostres();
     Postre p;
+
+    cout << "\nAgregar nuevo postre:\n";
+    cout << "ID: ";
+    cin >> p.id;
+    cin.ignore(numeric_limits<streamsize>::max(), '\n');
+    cout << "Nombre: ";
+    getline(cin, p.nombre);
+    cout << "Precio: ";
+    cin >> p.precio;
+    cout << "Cantidad: ";
+    cin >> p.cantidad;
+
+    lista.push_back(p);
+    guardarPostres(lista);
+
+    cout << "Postre agregado correctamente.\n";
+}
+
+// Modificar postre
+void modificarPostre() {
+    auto lista = leerPostres();
+    int idBuscar;
     bool encontrado = false;
 
-    ifstream archivo("postres.txt");
-    string linea;
+    cout << "\nIngrese el ID del postre a modificar: ";
+    cin >> idBuscar;
+    cin.ignore(numeric_limits<streamsize>::max(), '\n');
 
-    // Leer todos los postres del archivo
-    while (getline(archivo, linea)) {
-        stringstream ss(linea);
-        string idStr, nombre, precioStr, cantidadStr;
-        getline(ss, idStr, ',');
-        getline(ss, nombre, ',');
-        getline(ss, precioStr, ',');
-        getline(ss, cantidadStr, ',');
-
-        p.id = stoi(idStr);
-        p.nombre = nombre;
-        p.precio = stof(precioStr);
-        p.cantidad = stoi(cantidadStr);
-        lista.push_back(p);
-    }
-    archivo.close();#include <iostream>
-    int opcion;
-    do {
-        cout << "\n--- MENÚ ADMINISTRADOR ---\n";
-        cout << "1. Ver postres\n";
-        cout << "2. Agregar postre\n";
-        cout << "3. Salir\n";
-        cout << "Opción: ";
-        cin >> opcion;
-
-        switch (opcion) {
-            case 1: mostrarPostres(); break;
-            case 2: agregarPostre(); break;
-            case 3: cout << "Cerrando sesión...\n"; break;
-            default: cout << "Opción no válida.\n";
-        }
-    } while (opcion != 3);
-}
-
-void menuComprador() {
-    int opcion;
-    do {
-        cout << "\n--- MENÚ COMPRADOR ---\n";
-        cout << "1. Ver menú de postres\n";
-        cout << "2. Comprar postre\n";
-        cout << "3. Salir\n";
-        cout << "Opción: ";
-        cin >> opcion;
-
-        switch (opcion) {
-            case 1: verMenu(); break;
-            case 2: comprarPostre(); break;
-            case 3: cout << "Gracias por su compra!\n"; break;
-            default: cout << "Opción no válida.\n";
-        }
-    } while (opcion != 3);
-}
-
-// -------------------- PROGRAMA PRINCIPAL --------------------
-
-int main() {
-    string usuario, contraseña;
-
-    cout << "Ingrese usuario: ";
-    cin >> usuario;
-    cout << "Ingrese contraseña: ";
-    cin >> contraseña;
-
-    if (usuario == "admin" && contraseña == "12345678") {
-        cout << "\nBienvenido, Administrador 🧑‍💼\n";
-        menuAdmin();
-    }
-    else if (usuario == "comprador" && contraseña == "abc123") {
-        cout << "\nBienvenido, Comprador 🛒\n";
-        menuComprador();
-    }
-    else {
-        cout << "\n❌ Usuario o contraseña incorrectos.\n";
-    }
-
-    return 0;
-}
-
-    cout << "\nIngrese el ID del postre que desea comprar: ";
-    cin >> id;
-    cout << "Cantidad que desea comprar: ";
-    cin >> cantidadCompra;
-
-    // Buscar el postre
-    for (auto &item : lista) {
-        if (item.id == id) {
-            if (cantidadCompra <= item.cantidad) {
-                item.cantidad -= cantidadCompra;
-                cout << "\n✅ Compra realizada con éxito.\n";
-                cout << "Total a pagar: $" << (item.precio * cantidadCompra) << endl;
-            } else {
-                cout << "\n❌ No hay suficiente cantidad disponible.\n";
-            }
+    for (auto &p : lista) {
+        if (p.id == idBuscar) {
             encontrado = true;
+            cout << "\nPostre encontrado:\n";
+            cout << "Nombre actual: " << p.nombre << endl;
+            cout << "Precio actual: " << p.precio << endl;
+            cout << "Cantidad actual: " << p.cantidad << endl;
+
+            cout << "\nNuevo nombre (enter para dejar igual): ";
+            string nuevoNombre;
+            getline(cin, nuevoNombre);
+            if (!nuevoNombre.empty()) p.nombre = nuevoNombre;
+
+            cout << "Nuevo precio (0 para dejar igual): ";
+            float nuevoPrecio;
+            cin >> nuevoPrecio;
+            if (nuevoPrecio != 0) p.precio = nuevoPrecio;
+
+            cout << "Nueva cantidad (-1 para dejar igual): ";
+            int nuevaCantidad;
+            cin >> nuevaCantidad;
+            if (nuevaCantidad != -1) p.cantidad = nuevaCantidad;
+
             break;
         }
     }
 
-    if (!encontrado) {
-        cout << "\n❌ No se encontró el postre con ese ID.\n";
-        return;
+    if (encontrado) {
+        guardarPostres(lista);
+        cout << "Postre modificado correctamente.\n";
+    } else {
+        cout << "No se encontró el postre con ese ID.\n";
     }
-
-    // Reescribir archivo actualizado
-    ofstream out("postres.txt");
-    for (auto &item : lista) {
-        out << item.id << "," << item.nombre << "," << item.precio << "," << item.cantidad << "\n";
-    }
-    out.close();
 }
 
-// -------------------- MENÚS --------------------
+// Eliminar postre
+void eliminarPostre() {
+    auto lista = leerPostres();
+    int id;
+    bool eliminado = false;
 
+    cout << "\nIngrese el ID del postre a eliminar: ";
+    cin >> id;
+
+    vector<Postre> nuevaLista;
+    for (auto &p : lista) {
+        if (p.id == id) {
+            eliminado = true;
+            cout << "Postre eliminado: " << p.nombre << endl;
+            continue;
+        }
+        nuevaLista.push_back(p);
+    }
+
+    guardarPostres(nuevaLista);
+
+    if (eliminado)
+        cout << "Postre eliminado correctamente.\n";
+    else
+        cout << "No se encontró el postre.\n";
+}
+
+// Comprar postre
+void comprarPostre() {
+    auto lista = leerPostres();
+    int id, cantidadCompra;
+    bool encontrado = false;
+
+    cout << "\nIngrese el ID del postre a comprar: ";
+    cin >> id;
+    cout << "Cantidad a comprar: ";
+    cin >> cantidadCompra;
+
+    for (auto &p : lista) {
+        if (p.id == id) {
+            encontrado = true;
+            if (cantidadCompra <= p.cantidad) {
+                p.cantidad -= cantidadCompra;
+                cout << "\nCompra realizada correctamente.\n";
+                cout << "Total a pagar: $" << p.precio * cantidadCompra << endl;
+            } else {
+                cout << "No hay suficiente cantidad.\n";
+            }
+            break;
+        }
+    }
+
+    if (encontrado) {
+        guardarPostres(lista);
+    } else {
+        cout << "No se encontró el postre.\n";
+    }
+}
+
+// Menú administrador
 void menuAdmin() {
-    int opcion;
+    int op;
     do {
-        cout << "\n--- MENÚ ADMINISTRADOR ---\n";
+        cout << "\n--- MENU ADMINISTRADOR ---\n";
         cout << "1. Ver postres\n";
         cout << "2. Agregar postre\n";
-        cout << "3. Salir\n";
+        cout << "3. Modificar postre\n";
+        cout << "4. Eliminar postre\n";
+        cout << "0. Salir\n";
         cout << "Opción: ";
-        cin >> opcion;
+        cin >> op;
+        cin.ignore(numeric_limits<streamsize>::max(), '\n');
 
-        switch (opcion) {
+        switch (op) {
             case 1: mostrarPostres(); break;
             case 2: agregarPostre(); break;
-            case 3: cout << "Cerrando sesión...\n"; break;
+            case 3: modificarPostre(); break;
+            case 4: eliminarPostre(); break;
+            case 0: cout << "Saliendo...\n"; break;
             default: cout << "Opción no válida.\n";
         }
-    } while (opcion != 3);
+    } while (op != 0);
 }
 
+// Menú comprador
 void menuComprador() {
-    int opcion;
+    int op;
     do {
-        cout << "\n--- MENÚ COMPRADOR ---\n";
+        cout << "\n--- MENU COMPRADOR ---\n";
         cout << "1. Ver menú de postres\n";
         cout << "2. Comprar postre\n";
-        cout << "3. Salir\n";
+        cout << "0. Salir\n";
         cout << "Opción: ";
-        cin >> opcion;
+        cin >> op;
 
-        switch (opcion) {
-            case 1: verMenu(); break;
+        switch (op) {
+            case 1: mostrarPostres(); break;
             case 2: comprarPostre(); break;
-            case 3: cout << "Gracias por su compra!\n"; break;
+            case 0: cout << "Saliendo...\n"; break;
             default: cout << "Opción no válida.\n";
         }
-    } while (opcion != 3);
+    } while (op != 0);
 }
 
-// -------------------- PROGRAMA PRINCIPAL --------------------
-
+// Programa principal
 int main() {
-    string usuario, contraseña;
+    string usuario, password;
 
-    cout << "Ingrese usuario: ";
+    cout << "Usuario: ";
     cin >> usuario;
-    cout << "Ingrese contraseña: ";
-    cin >> contraseña;
+    cout << "Contraseña: ";
+    cin >> password;
 
-    if (usuario == "admin" && contraseña == "12345678") {
-        cout << "\nBienvenido, Administrador 🧑‍💼\n";
+    if (usuario == "admin" && password == "12345678") {
         menuAdmin();
-    }
-    else if (usuario == "comprador" && contraseña == "abc123") {
-        cout << "\nBienvenido, Comprador 🛒\n";
+    } else if (usuario == "comprador" && password == "abc123") {
         menuComprador();
-    }
-    else {
-        cout << "\n❌ Usuario o contraseña incorrectos.\n";
+    } else {
+        cout << "Usuario o contraseña incorrectos.\n";
     }
 
     return 0;
